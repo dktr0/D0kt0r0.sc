@@ -58,13 +58,13 @@ SynthDef(\tine,
 	}
 ).add;
 
-~chebyBassTransfer = Buffer.alloc(Server.default,16384);
-~chebyBassTransfer.cheby([1,0,0.5,0,0.5,0.2,0.5,0.1,0.1,0.1,0.1,0.1]);
+c = Buffer.alloc(Server.default,16384);
+c.cheby([1,0,0.5,0,0.5,0.2,0.5,0.1,0.1,0.1,0.1,0.1]);
 SynthDef(\chebyBass,
 	{
 		arg freq=55,amp=0.1,out=0,preamp=1,gate=0.5,fnoise=0.003,lpf=8000;
 		var audio = SinOsc.ar(freq*Rand(1-fnoise,1+fnoise),mul:preamp);
-		audio = Shaper.ar(~chebyBassTransfer.bufnum,audio,mul:amp);
+		audio = Shaper.ar(c.bufnum,audio,mul:amp);
 		audio = audio * EnvGen.ar(Env.adsr(0.001,0.3,-3.dbamp,0.3),gate:gate,doneAction:2);
 		audio = LPF.ar(audio,freq:lpf);
 		Out.ar(out,audio);
@@ -195,5 +195,4 @@ SynthDef(\sawU,
 	}
 ).add;
 
-"synths loaded".postln;
 )

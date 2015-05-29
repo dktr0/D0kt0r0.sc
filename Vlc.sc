@@ -150,7 +150,7 @@ Vlc {
 			env = EnvGen.ar(Env.linen(0.01,sustain,0.01),doneAction:2);
 			Out.ar(out,audio*env);
 		}).add;
-		thisProcess.interpreter.executeFile("/Users/ogbornd/d0kt0r0.sc/synths.sc");
+		thisProcess.interpreter.executeFile("~/d0kt0r0.sc/synths.scd".standardizePath);
 	}
 
 	*outputs {
@@ -221,22 +221,33 @@ Vlc {
 	}
 
 	*record {
-		recBuffer = Buffer.alloc(Server.default,65536,4);
-		recBuffer.write(("~/verylongcat"++(Date.getDate.stamp)++".wav").standardizePath,"WAV","int24",0,0,true);
-		recSynth = SynthDef(\recSynth,{
-			arg bufnum;
-			var tablaL = SoundIn.ar(0);
-			var tablaR = SoundIn.ar(1);
-			var noTablaL = DelayN.ar(In.ar(32),1.0,~latency.kr);
-			var noTablaR = DelayN.ar(In.ar(33),1.0,~latency.kr);
-			DiskOut.ar(bufnum,[tablaL,tablaR,noTablaL,noTablaR]*(-10.dbamp));
-		}).play(outputGroup,[bufnum:recBuffer.bufnum],addAction: 'addToTail');
+		if(recSynth.isNil,{
+			recBuffer = Buffer.alloc(Server.default,65536,4);
+			recBuffer.write(("~/verylongcat"++(Date.getDate.stamp)++".wav").standardizePath,"WAV","int24",0,0,true);
+			recSynth = SynthDef(\recSynth,{
+				arg bufnum;
+				var tablaL = SoundIn.ar(0);
+				var tablaR = SoundIn.ar(1);
+				var noTablaL = DelayN.ar(In.ar(32),1.0,~latency.kr);
+				var noTablaR = DelayN.ar(In.ar(33),1.0,~latency.kr);
+				DiskOut.ar(bufnum,[tablaL,tablaR,noTablaL,noTablaR]*(-10.dbamp));
+			}).play(outputGroup,[bufnum:recBuffer.bufnum],addAction: 'addToTail');
+		},
+		{
+			"Warning: already recording".postln;
+		});
 	}
 
 	*stopRecording {
-		recSynth.free;
-		recBuffer.close;
-		recBuffer.free;
+		if(recSynth.notNil,{
+			recSynth.free;
+			recBuffer.close;
+			recBuffer.free;
+			recSynth = nil;
+		},
+		{
+			"Warning: can't stop because not recording".postln;
+		});
 	}
 
 	*to { |x| ^mainBus.index+x; }
