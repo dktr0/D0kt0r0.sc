@@ -1,32 +1,38 @@
 Vlc {
 
 	classvar <config; // symbol naming current configuration
+	classvar <snova;
 	classvar <latency;
 	classvar <speakers; // dictionary of speaker sets
+	classvar <nchnls,<leftChannels,<rightChannels; // for stereo mixdowns
 	classvar <proxySpace;
-	classvar <mainGroup,<outputGroup;
+	classvar <jitGroup,<mainGroup,<outputGroup;
 	classvar <mainBus;
 	classvar <delayedSynth,<noTablaSynth,<tablaSynth;
 	classvar recSynth,recBuffer;
 
 	*meow {
-		| cfg = \stereo |
+		| cfg=\stereo, jack=true, supernova=true |
 		config = cfg;
+		snova = supernova;
 		latency = 0.135;
-		Server.internal.options.device = "JackRouter";
-		Server.internal.options.numOutputBusChannels = 34;
-		Server.internal.options.numInputBusChannels = 2;
-		Server.internal.options.numAudioBusChannels = 256;
-		Server.default = Server.internal;
+		if(supernova==true,{Server.supernova});
+		Server.default = Server.local;
+		if(jack==true,{Server.default.options.device = "JackRouter"});
+		Server.default.options.numOutputBusChannels = 34;
+		Server.default.options.numInputBusChannels = 2;
+		Server.default.options.numAudioBusChannels = 256;
 		proxySpace = ProxySpace.new.push;
 		proxySpace.fadeTime = 2;
-		Server.internal.waitForBoot( { Vlc.afterBoot; "meow".postln; });
+		Server.default.waitForBoot( { Vlc.afterBoot; "meow".postln; });
 	}
 
 	*afterBoot {
-		proxySpace.group = mainGroup = Group.head;
-		outputGroup = Group.tail;
 		mainBus = Bus.audio(Server.default,32);
+		jitGroup = Group.head;
+		mainGroup = ParGroup.tail;
+		outputGroup = ParGroup.tail;
+		proxySpace.group = jitGroup;
 		Vlc.spaces;
 		Vlc.nodes;
 		Vlc.synths;
@@ -35,78 +41,51 @@ Vlc {
 		Vlc.record;
 	}
 
-	*quit {
-		Server.default.quit;
-	}
-
-	*latency_ { |x|
-		latency=x;
-		proxySpace.push;
-		~latency = latency;
-		proxySpace.pop;
-	}
-
 	*spaces {
-		if(config == \liveLab,{ speakers = Dictionary[
-			\main -> ([13,14]-1),
-			\left -> ((1..4)-1),
-			\right -> ((5..8)-1),
-			\back -> ((9..12)-1),
-			\leftUp -> ((15..18)-1),
-			\rightUp -> ((19..22)-1),
-			\distant -> ([23,24]-1),
-			\all -> ((1..24)-1),
-			\nomain -> (((1..12)++(15..24))-1),
-			\up -> ((15..22)-1),
-			\down -> ((1..12)-1),
-			\01 -> ([0,1])
-		]});
-		if(config == \stereo,{ speakers = Dictionary[
-			\main -> ([13,14]-1),
-			\left -> ((1..4)-1),
-			\right -> ((5..8)-1),
-			\back -> ((9..12)-1),
-			\leftUp -> ((15..18)-1),
-			\rightUp -> ((19..22)-1),
-			\distant -> ([23,24]-1),
-			\all -> ((1..24)-1),
-			\nomain -> (((1..12)++(15..24))-1),
-			\up -> ((15..22)-1),
-			\down -> ((1..12)-1),
-			\01 -> [0,1]
-		]});
-		if(config == \nime2015, { speakers = Dictionary[
-			\stage -> ((1..8)-1),
-			\left -> ((9..12)-1),
-			\right -> ((13..16)-1),
-			\back -> ((17..24)-1),
-			\up -> ((25..32)-1),
-			\01 -> [0,1]
-		]});
+		if(config == \liveLab,{
+			speakers = Dictionary[
+				\main -> ([13,14]-1),
+				\left -> ((1..4)-1),
+				\right -> ((5..8)-1),
+				\back -> ((9..12)-1),
+				\leftUp -> ((15..18)-1),
+				\rightUp -> ((19..22)-1),
+				\distant -> ([23,24]-1),
+				\all -> ((1..24)-1),
+				\nomain -> (((1..12)++(15..24))-1),
+				\up -> ((15..22)-1),
+				\down -> ((1..12)-1)
+			];
+			nchnls=24;
+			leftChannels = [ ]; // *** missing ***
+			rightChannels = [ ]; // *** missing ***
+		});
+		if(config == \stereo,{
+			speakers = Dictionary[
+				\left -> [0],
+				\right -> [1],
+				\all -> [0,1],
+			];
+			nchnls=2;
+			leftChannels = [0];
+			rightChannels = [1];
+		});
+		if(config == \nime2015, {
+			speakers = Dictionary[
+				\stage -> ((1..8)-1),
+				\left -> ((9..12)-1),
+				\right -> ((13..16)-1),
+				\back -> ((17..24)-1),
+				\up -> ((25..32)-1),
+				\all -> ((1..32)-1)
+			];
+			nchnls=32;
+			leftChannels = ([1,3,5,7]++(9..12)++(17..20)++(25..28))-1+mainBus.index;
+			rightChannels = ([2,4,6,8]++(13..16)++(21..24)++(29..32))-1+mainBus.index;
 
-/* details of stage speakers at NIME:
-1		55		top narrow speakers left
-2		53		top narrow speakers right
-3		54		top narrow speakers centre
-4		32&33	stage centre (4 spkrs)
-5		31		stage left (2 spkrs)
-6		34		stage right (2 spkrs)
-7		17		high-wide onstage speaker left
-8		22		high-wide onstage speaker right
-*/
+		});
 
-	speakers.keysValuesDo( { | key,value | Pdefn(key,Pxrand(value+mainBus.index,inf)); });
-	}
-
-	*delay {
-		| signal,time |
-		^DelayN.ar(signal,time-latency,time-latency);
-	}
-
-	*follow {
-		| signal,time,db |
-		^(DelayN.ar(~env.ar,time-latency,time-latency) *
-			signal * (db.dbamp));
+		speakers.keysValuesDo( { | key,value | Pdefn(key,Pxrand(value+mainBus.index,inf)); });
 	}
 
 	*nodes {
@@ -154,59 +133,53 @@ Vlc {
 	}
 
 	*outputs {
-		if(delayedSynth.notNil,{delayedSynth.free});
-		if(noTablaSynth.notNil,{noTablaSynth.free});
-		if(tablaSynth.notNil,{tablaSynth.free});
-		if( config == \stereo,{
-			delayedSynth = SynthDef(\delayedSynth,{
-				var left = Vlc.sumOfAudioBuses([0,1,2,3,8,9,12,14,15,16,17,22]+mainBus.index);
-				var right = Vlc.sumOfAudioBuses([4,5,6,7,10,11,13,18,19,20,21,23]+mainBus.index);
-				Out.ar(0,DelayN.ar([left,right],1.0,~latency.kr,-6.dbamp));
-			}).play(target:outputGroup);
-			noTablaSynth = SynthDef(\noTablaSynth,{
-				var left = Vlc.sumOfAudioBuses([0,1,2,3,8,9,14,15,16,17,22]+mainBus.index);
-				var right = Vlc.sumOfAudioBuses([4,5,6,7,10,11,18,19,20,21,23]+mainBus.index);
-				Out.ar(32,[left,right]/2);
-			}).play(target:outputGroup);
-			tablaSynth = SynthDef(\tablaSynth,{
-				var left = SoundIn.ar(0);
-				var right = SoundIn.ar(1);
-				var env = Lag.ar(K2A.ar(~tabla.kr.dbamp),lagTime:4);
-				Out.ar(12,[left,right]*env); // ???
-			}).play(target:outputGroup);
-		});
+		Vlc.playDelayedSynth;
+		Vlc.playNoTablaSynth;
+		Vlc.playTablaSynth;
 	}
 
-	*sumOfAudioBuses { |buses| ^buses.inject(K2A.ar(0),function:{|x,y|x+In.ar(y);}); }
+	*playDelayedSynth {
+		if(delayedSynth.notNil,{delayedSynth.free});
+		delayedSynth = SynthDef(\delayedSynth,{
+			Out.ar(0,DelayN.ar(In.ar(mainBus.index,nchnls),0.5,~latency.kr,-6.dbamp));
+		}).play(target:outputGroup);
+	}
+
+	*playTablaSynth {
+		if(tablaSynth.notNil,{tablaSynth.free});
+		tablaSynth = SynthDef(\tablaSynth,{
+			var env = Lag.ar(K2A.ar(~tabla.kr.dbamp),lagTime:4);
+			Out.ar(0,[SoundIn.ar(0),SoundIn.ar(1)]*env);
+		}).play(target:outputGroup);
+	}
+
+	*playNoTablaSynth {
+		noTablaSynth = SynthDef(\noTablaSynth,{
+			var left = Mix.new(In.ar(leftChannels));
+			var right = Mix.new(In.ar(rightChannels));
+			Out.ar(32,[left,right]/2);
+		}).play(target:outputGroup);
+	}
 
 	*jack {
-		if(config == \stereo,{
-			"jack_connect jacktrip:receive_1 sclang:in1".systemCmd;
-			"jack_connect jacktrip:receive_2 sclang:in2".systemCmd;
-			"jack_connect sclang:out33 jacktrip:send_1".systemCmd;
-			"jack_connect sclang:out34 jacktrip:send_2".systemCmd;
-			Vlc.connectMainOuts(2);
-		});
-		if(config == \liveLab, {
-			"jack_connect jacktrip:receive_1 sclang:in1".systemCmd;
-			"jack_connect jacktrip:receive_2 sclang:in2".systemCmd;
-			"jack_connect sclang:out33 jacktrip:send_1".systemCmd;
-			"jack_connect sclang:out34 jacktrip:send_2".systemCmd;
-			Vlc.connectMainOuts(24);
-		});
-		if(config == \nime2015, {
-			"jack_connect jacktrip:receive_1 sclang:in1".systemCmd;
-			"jack_connect jacktrip:receive_2 sclang:in2".systemCmd;
-			"jack_connect sclang:out33 jacktrip:send_1".systemCmd;
-			"jack_connect sclang:out34 jacktrip:send_2".systemCmd;
-			Vlc.connectMainOuts(32);
-		});
+		Vlc.connectJackTrip;
+		Vlc.connectMainOuts(nchnls);
+	}
+
+	*connectJackTrip {
+		var serverName = if(snova==true,"supernova","sclang");
+		("/usr/local/bin/jack_connect jacktrip:receive_1 "++serverName++":in1").postln.systemCmd;
+		("/usr/local/bin/jack_connect jacktrip:receive_2 "++serverName++":in2").postln.systemCmd;
+		("/usr/local/bin/jack_connect "++serverName++":out33 jacktrip:send_1").postln.systemCmd;
+		("/usr/local/bin/jack_connect "++serverName++":out33 jacktrip:send_1").postln.systemCmd;
 	}
 
 	*connectMainOuts {
-		|n| n.do {
+		|n|
+		var serverName = if(snova==true,"supernova","sclang");
+		n.do {
 			|x|
-			var cmd = "jack_connect sclang:out" ++ ((x+1).asString) ++ " jacktrip:send_" ++ ((x+1).asString);
+			var cmd = "/usr/local/bin/jack_connect "++serverName++":out" ++ ((x+1).asString) ++ " system:playback_" ++ ((x+1).asString);
 			cmd.postln;
 			cmd.systemCmd;
 		}
@@ -215,7 +188,9 @@ Vlc {
 	*test {
 		Pbindef(\test,\dur,0.25);
 		Pbindef(\test,\midinote,62);
-		Pbindef(\test,\out,Pdefn(\nomain));
+		Pbindef(\test,\out,Pdefn(\all));
+		Pbindef(\test,\instrument,\point);
+		Pbindef(\test,\group,mainGroup);
 		Pbindef(\test).play;
 		^Pdef(\test);
 	}
@@ -228,8 +203,10 @@ Vlc {
 				arg bufnum;
 				var tablaL = SoundIn.ar(0);
 				var tablaR = SoundIn.ar(1);
-				var noTablaL = DelayN.ar(In.ar(32),1.0,~latency.kr);
-				var noTablaR = DelayN.ar(In.ar(33),1.0,~latency.kr);
+				var noTablaL = Mix.new(In.ar(leftChannels));
+				var noTablaR = Mix.new(In.ar(rightChannels));
+				noTablaL = DelayN.ar(noTablaL,0.5,~latency.kr);
+				noTablaR = DelayN.ar(noTablaR,0.5,~latency.kr);
 				DiskOut.ar(bufnum,[tablaL,tablaR,noTablaL,noTablaR]*(-10.dbamp));
 			}).play(outputGroup,[bufnum:recBuffer.bufnum],addAction: 'addToTail');
 		},
@@ -254,6 +231,26 @@ Vlc {
 
 	*tree { RootNode(Server.default).queryTree; }
 
+	*quit {
+		Vlc.stopRecording;
+		Server.default.quit;
+	}
+
+	*latency_ { |x|
+		latency=x;
+		~latency = latency;
+	}
+
+	*delay {
+		| signal,time |
+		^DelayN.ar(signal,time-latency,time-~latency.kr);
+	}
+
+	*follow {
+		| signal,time,db |
+		^(DelayN.ar(~env.ar,time-latency,time-~latency.kr) *
+			signal * (db.dbamp));
+	}
 }
 
 

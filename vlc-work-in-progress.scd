@@ -1,3 +1,11 @@
+Vlc.meow(\nime2015);
+Vlc.test
+Pbindef(\test,\db,-2,\dur,0.125,\midinote,(40..84));
+Pbindef(\test).stop
+~tabla = -30
+Vlc.stopRecording
+Vlc.quit
+
 Vlc.meow;
 (instrument:\point,out:Vlc.to(0),db:-1).play; // works
 (instrument:\point,out:Vlc.to(4),db:-1).play; // works
@@ -12,11 +20,11 @@ Vlc.meow;
 Vlc.stopRecording
 Vlc.quit
 
-// try a newer build of SC with attention to multi-processing issue
+// TODO:
+// still need to try new SC build and supernova on second computer!!!
 // metering tailored to the situation (with ge gi na tun, etc)
 // better Synthdefs
-// lots of practice
-// lots of tests, including with recording and screencap going
+// lots of practice & tests, including with recording and screencap going
 
 TempoClock.tempo = 104/60
 ~pitch = 26
