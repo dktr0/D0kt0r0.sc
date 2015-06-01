@@ -1,27 +1,4 @@
-Vlc.meow(\nime2015);
-Vlc.test
-Pbindef(\test,\db,-2,\dur,0.125,\midinote,(40..84));
-Pbindef(\test).stop
-~tabla = -30
-Vlc.stopRecording
-Vlc.quit
-
-Vlc.meow;
-(instrument:\point,out:Vlc.to(0),db:-1).play; // works
-(instrument:\point,out:Vlc.to(4),db:-1).play; // works
-~test.to(0)
-~test.stop
-~saw = { Saw.ar(110,-20.dbamp) }
-~saw.to(0);
-~saw.to(4);
-~saw.to([0,4]);
-~saw.stop(10)
-~tabla = -20; // works: inputs 0 & 1 go to 12 & 13
-Vlc.stopRecording
-Vlc.quit
-
 // TODO:
-// still need to try new SC build and supernova on second computer!!!
 // metering tailored to the situation (with ge gi na tun, etc)
 // better Synthdefs
 // lots of practice & tests, including with recording and screencap going
@@ -41,6 +18,26 @@ TempoClock.tempo = 104/60
 ~saw3.playN([3,7]+Vlc.offset);
 ~saw4 = { Saw.ar((~pitch.ar+27).midicps,mul:-1.dbamp)*~tun.ar; }
 ~saw4.playN([3,7]+Vlc.offset);
+r = 26;
+~a = { LFTri.ar([26,38,50,62]-26+r.midicps,mul:-20.dbamp) *~ge.ar}
+~b = { LFTri.ar([38,50,62,74].midicps,mul:-20.dbamp) *~gi.ar}
+~c = ...
+~d = ...
+
+Vlc.meow(\nime2015,jack:false);
+w = Window.new.front;
+a = LevelIndicator(w,Rect(10,10,20,160));
+a.value = 0.6
+a.drawsPeak = true
+a.peakLevel = 0.8
+a.style = 1
+a.numSteps = 10
+a.numTicks = 10
+
+z = ProxyMonitorGui
+ProxyMonitorGui(~test)
+NdefMixer(Server.local,24);
+
 
 
 

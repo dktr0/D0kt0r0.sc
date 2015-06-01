@@ -25,7 +25,7 @@ D0kt0r0 {
 	}
 
 	*synths {
-		thisProcess.interpreter.executeFile("/Users/ogbornd/Dropbox/code/synths.sc");
+		thisProcess.interpreter.executeFile("~/d0kt0r0.sc/synths.scd".standardizePath);
 	}
 
 }
