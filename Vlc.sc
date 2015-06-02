@@ -364,17 +364,34 @@ Vlc {
 
 	*saw {
 		|notes=62,db=(-20)|
-		^Saw.ar(Vlc.q(notes).midicps,mul:db.dbamp);
+		if(notes.isKindOf(NodeProxy),{
+			^Saw.ar(notes.kr.midicps,mul:db.dbamp);
+		},{
+			^Saw.ar(Vlc.q(notes).midicps,mul:db.dbamp);
+		});
 	}
 
 	*sin {
 		|notes=62,db=(-20)|
-		^SinOsc.ar(Vlc.q(notes).midicps,mul:db.dbamp);
+		if(notes.isKindOf(NodeProxy),{
+			^SinOsc.ar(notes.kr.midicps,mul:db.dbamp);
+		},{
+			^SinOsc.ar(Vlc.q(notes).midicps,mul:db.dbamp);
+		});
 	}
 
 	*tri {
 		|notes=62,db=(-20)|
-		^LFTri.ar(Vlc.q(notes).midicps,mul:db.dbamp);
+		if(notes.isKindOf(NodeProxy),{
+			^LFTri.ar(Vlc.q(notes).midicps,mul:db.dbamp);
+		},{
+			^LFTri.ar(Vlc.q(notes).midicps,mul:db.dbamp);
+		});
+	}
+
+	*tdef {
+		|name,def|
+		^Tdef(name, { inf.do(def) });
 	}
 
 }
