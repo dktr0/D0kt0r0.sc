@@ -99,9 +99,9 @@ SynthDef(\zip,
 
 SynthDef(\w,
 	{
-		arg in = 0, out = 0, dur = 1.0, amp = 0.1;
+		arg in = 0, out = 0, sustain = 1.0, amp = 0.1;
 		var audio = In.ar(in) * amp;
-		audio = audio * EnvGen.ar(Env.linen(0.001,dur-0.011,0.010),doneAction:2);
+		audio = audio * EnvGen.ar(Env.linen(0.001,sustain-0.011,0.010),doneAction:2);
 		Out.ar(out,audio);
 	}
 ).add;
@@ -137,10 +137,10 @@ SynthDef(\kick,
 
 SynthDef(\blip,
 	{
-		arg freq = 60, out = 0, amp = 0.1, dur = 0.099;
+		arg freq = 60, out = 0, amp = 0.1, sustain = 0.099;
 		var audio;
 		audio = Blip.ar(freq, mul: amp);
-		audio = audio * EnvGen.ar(Env.perc(0.001,dur-0.001), doneAction: 2);
+		audio = audio * EnvGen.ar(Env.perc(0.001,sustain-0.001), doneAction: 2);
 		Out.ar(out,audio);
 }).add;
 
@@ -154,10 +154,10 @@ SynthDef(\splat,
 
 SynthDef(\ping,
 	{
-		arg freq = 60, out = 0, amp = 0.1, dur = 0.051, pan = 0, fnoise = 0.003;
+		arg freq = 60, out = 0, amp = 0.1, sustain = 0.051, pan = 0, fnoise = 0.003;
 		var audio;
 		audio = Saw.ar(freq*Rand(1-fnoise,1+fnoise),mul:amp);
-		audio = audio * EnvGen.ar(Env.perc(0.001,dur - 0.001), doneAction: 2);
+		audio = audio * EnvGen.ar(Env.perc(0.001,sustain - 0.001), doneAction: 2);
 		Out.ar(out,audio);
 }).add;
 

@@ -11,13 +11,16 @@ Vlc {
 	classvar <delayedSynth,<noTablaSynth,<tablaSynth;
 	classvar recSynth,recBuffer;
 	classvar <>qRange;
+	classvar <>myAddress,<>shawnsAddress;
 
 	*meow {
 		| cfg=\stereo, jack=true, supernova=true, sampleRate=48000 |
+		myAddress = "130.39.92.9";
+		shawnsAddress = "132.206.162.199";
 		qRange = 0.03;
 		config = cfg;
 		snova = supernova;
-		latency = 0.135;
+		latency = 0.14;
 		Server.default = Server.local;
 		if(supernova==true,{Server.supernova},{Server.scsynth});
 		if(jack==true,{Server.default.options.device = "JackRouter"},
@@ -26,9 +29,35 @@ Vlc {
 		Server.default.options.numOutputBusChannels = 34;
 		Server.default.options.numInputBusChannels = 2;
 		Server.default.options.numAudioBusChannels = 256;
-		proxySpace = ProxySpace.new.push;
-		proxySpace.fadeTime = 2;
-		Server.default.waitForBoot( { Vlc.afterBoot; "meow".postln; });
+		if(Server.default.serverRunning,{
+			Vlc.stopRecording; // a second meow restarts recording and resets key resources with no reboot
+			fork {
+				2.wait;
+				Vlc.spaces;
+				Vlc.nodes;
+				Vlc.synths;
+				Vlc.outputs;
+				Vlc.jack;
+				Vlc.record;
+				"meow meow meow".postln;
+			};
+		},{
+			proxySpace = ProxySpace.new.push;
+			proxySpace.fadeTime = 2;
+			Server.default.waitForBoot( {
+				Vlc.afterBoot;
+				"meow".postln;
+			});
+		});
+	}
+
+	*meowMeow {
+		Vlc.stopRecording;
+		fork {
+			2.wait;
+			Vlc.record;
+			"meow meow".postln;
+		}
 	}
 
 	*afterBoot {
@@ -81,7 +110,8 @@ Vlc {
 				\right -> ((13..16)-1),
 				\back -> ((17..24)-1),
 				\up -> ((25..32)-1),
-				\all -> ((1..32)-1)
+				\all -> ((1..32)-1),
+				\noup -> ((1..24)-1)
 			];
 			nchnls=32;
 			leftChannels = ([1,3,5,7]++(9..12)++(17..20)++(25..28))-1+mainBus.index;
@@ -117,10 +147,10 @@ Vlc {
 		~giQ = 40;
 		~naQ = 400;
 		~tunQ = 200;
-		~geG = 0;
-		~giG = 12;
-		~naG = 27;
-		~tunG = 18;
+		~geG = 15;
+		~giG = 27;
+		~naG = 38;
+		~tunG = 29;
 		~geA = { Resonz.ar(SoundIn.ar(0),~geF.kr,bwr:1/~geQ.kr,mul:~geG.ar.dbamp) };
 		~giA = { Resonz.ar(SoundIn.ar(0),~giF.kr,bwr:1/~giQ.kr,mul:~giG.ar.dbamp) };
 		~naA = { Resonz.ar(SoundIn.ar(1),~naF.kr,bwr:1/~naQ.kr,mul:~naG.ar.dbamp) };
@@ -135,11 +165,11 @@ Vlc {
 		SynthDef(\dly,{
 			arg sustain=0.5, dly=0.25, amp=0.1, out=0;
 			var audio,env;
-			env = Env.linen(0.005,dly-0.01,0.005);
+			env = Env.linen(0.005,sustain-0.01,0.005);
 			env = EnvGen.ar(env);
 			audio = (SoundIn.ar(0)+SoundIn.ar(1))*env;
 			audio = DelayN.ar(audio,dly,dly);
-			env = EnvGen.ar(Env.linen(0.01,sustain,0.01),doneAction:2);
+			env = EnvGen.ar(Env.linen(0.01,sustain+dly,0.01),doneAction:2);
 			Out.ar(out,audio*env);
 		}).add;
 		thisProcess.interpreter.executeFile("~/d0kt0r0.sc/synths.scd".standardizePath);
@@ -166,7 +196,8 @@ Vlc {
 		if(tablaSynth.notNil,{tablaSynth.free});
 		tablaSynth = SynthDef(\tablaSynth,{
 			var env = Lag.ar(K2A.ar(~tabla.kr.dbamp),lagTime:4);
-			Out.ar(0,[SoundIn.ar(0),SoundIn.ar(1)]*env);
+			var audio = Mix.new([SoundIn.ar(0),SoundIn.ar(1)])*env;
+			Out.ar(0,audio!8);
 		}).play(target:outputGroup);
 	}
 
@@ -175,7 +206,7 @@ Vlc {
 			var audio = [Mix.new(In.ar(leftChannels)),Mix.new(In.ar(rightChannels))];
 			audio = audio * ~noTabla.kr.dbamp;
 			audio = Compander.ar(audio,audio,thresh:~noTablaThreshold.kr.dbamp,slopeAbove:1/~noTablaRatio.kr,clampTime:0.002,relaxTime:0.1);
-			Out.ar(32,audio); // still needs testing and parameterizatio
+			Out.ar(32,audio);
 		}).play(target:outputGroup);
 	}
 
@@ -186,10 +217,10 @@ Vlc {
 
 	*connectJackTrip {
 		var serverName = if(snova==true,"supernova","sclang");
-		("/usr/local/bin/jack_connect jacktrip:receive_1 "++serverName++":in1").systemCmd;
-		("/usr/local/bin/jack_connect jacktrip:receive_2 "++serverName++":in2").systemCmd;
-		("/usr/local/bin/jack_connect "++serverName++":out33 jacktrip:send_1").systemCmd;
-		("/usr/local/bin/jack_connect "++serverName++":out33 jacktrip:send_1").systemCmd;
+		("/usr/local/bin/jack_connect JackTrip:receive_1 "++serverName++":in1").systemCmd;
+		("/usr/local/bin/jack_connect JackTrip:receive_2 "++serverName++":in2").systemCmd;
+		("/usr/local/bin/jack_connect "++serverName++":out33 JackTrip:send_1").systemCmd;
+		("/usr/local/bin/jack_connect "++serverName++":out34 JackTrip:send_2").systemCmd;
 	}
 
 	*connectMainOuts {
