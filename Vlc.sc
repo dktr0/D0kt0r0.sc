@@ -10,9 +10,11 @@ Vlc {
 	classvar <mainBus;
 	classvar <delayedSynth,<noTablaSynth,<tablaSynth;
 	classvar recSynth,recBuffer;
+	classvar <>qRange;
 
 	*meow {
 		| cfg=\stereo, jack=true, supernova=true, sampleRate=48000 |
+		qRange = 0.03;
 		config = cfg;
 		snova = supernova;
 		latency = 0.135;
@@ -211,6 +213,16 @@ Vlc {
 		^Pdef(\test);
 	}
 
+	*tablaSendTest {
+		Pbindef(\tablaSendTest,\dur,0.5);
+		Pbindef(\tablaSendTest,\midinote,62);
+		Pbindef(\tablaSendTest,\out,Pseq([32,33],inf));
+		Pbindef(\tablaSendTest,\instrument,\point);
+		Pbindef(\tablaSendTest,\group,mainGroup);
+		Pbindef(\tablaSendTest).play;
+		^Pdef(\tablaSendTest);
+	}
+
 	*record {
 		if(recSynth.isNil,{
 			var nRecChannels = if(config==\nime2015,10,4);
@@ -295,6 +307,45 @@ Vlc {
 		^(DelayN.ar(~env.ar,time-latency,time-~latency.kr) *
 			signal * (db.dbamp));
 	}
+
+	*q {
+		|x|
+		var base,dt;
+		if(x.isArray,{
+			if(x.size==1,{
+				base = x[0]!4;
+			});
+			if(x.size==2,{
+				base = x ++ x;
+			});
+			if(x.size==3,{
+				base = x ++ [x[0]];
+			});
+			if(x.size==4,{
+				base = x;
+			});
+		},{
+			base = x!4;
+		});
+		dt = [qRange.rand2,qRange.rand2,qRange.rand2,qRange.rand2];
+		^base + dt;
+	}
+
+	*saw {
+		|notes=62,db=(-20)|
+		^Saw.ar(Vlc.q(notes).midicps,mul:db.dbamp);
+	}
+
+	*sin {
+		|notes=62,db=(-20)|
+		^SinOsc.ar(Vlc.q(notes).midicps,mul:db.dbamp);
+	}
+
+	*tri {
+		|notes=62,db=(-20)|
+		^LFTri.ar(Vlc.q(notes).midicps,mul:db.dbamp);
+	}
+
 }
 
 

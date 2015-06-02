@@ -1,7 +1,3 @@
-// TODO:
-// metering tailored to the situation (with ge gi na tun, etc)
-// better Synthdefs
-// lots of practice & tests, including with recording and screencap going
 
 TempoClock.tempo = 104/60
 ~pitch = 26
@@ -18,25 +14,16 @@ TempoClock.tempo = 104/60
 ~saw3.playN([3,7]+Vlc.offset);
 ~saw4 = { Saw.ar((~pitch.ar+27).midicps,mul:-1.dbamp)*~tun.ar; }
 ~saw4.playN([3,7]+Vlc.offset);
+
+
 r = 26;
-~a = { LFTri.ar([26,38,50,62]-26+r.midicps,mul:-20.dbamp) *~ge.ar}
-~b = { LFTri.ar([38,50,62,74].midicps,mul:-20.dbamp) *~gi.ar}
+z = -20.dbamp
+~a = { LFTri.ar(([26,38,50,62]-26+r).midicps,mul:-20.dbamp) *~ge.ar}
+~saw={Saw.ar([26,38,50,62].midicps)*z*~ge.ar}
+~b = { LFTri.ar(([38,50,62,74]-26+r).midicps,mul:-20.dbamp) *~gi.ar}
 ~c = ...
 ~d = ...
 
-Vlc.meow(\nime2015,jack:false);
-w = Window.new.front;
-a = LevelIndicator(w,Rect(10,10,20,160));
-a.value = 0.6
-a.drawsPeak = true
-a.peakLevel = 0.8
-a.style = 1
-a.numSteps = 10
-a.numTicks = 10
-
-z = ProxyMonitorGui
-ProxyMonitorGui(~test)
-NdefMixer(Server.local,24);
 
 
 
