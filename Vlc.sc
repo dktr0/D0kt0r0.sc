@@ -14,7 +14,7 @@ Vlc {
 	classvar <>myAddress,<>shawnsAddress;
 
 	*meow {
-		| cfg=\stereo, jack=true, supernova=true, sampleRate=48000 |
+		| cfg=\stereo, jack=true, supernova=true, sampleRate=48000, record=true |
 		myAddress = "130.39.92.9";
 		shawnsAddress = "132.206.162.199";
 		qRange = 0.03;
@@ -22,8 +22,8 @@ Vlc {
 		snova = supernova;
 		latency = 0.14;
 		Server.default = Server.local;
-		if(supernova==true,{Server.supernova},{Server.scsynth});
-		if(jack==true,{Server.default.options.device = "JackRouter"},
+		if(supernova,{Server.supernova},{Server.scsynth});
+		if(jack,{Server.default.options.device = "JackRouter"},
 			{Server.default.options.device = nil});
 		Server.default.options.sampleRate = sampleRate;
 		Server.default.options.numOutputBusChannels = 34;
@@ -37,8 +37,8 @@ Vlc {
 				Vlc.nodes;
 				Vlc.synths;
 				Vlc.outputs;
-				Vlc.jack;
-				Vlc.record;
+				if(jack,{Vlc.jack});
+				if(record,{Vlc.record});
 				"meow meow meow".postln;
 			};
 		},{
@@ -46,13 +46,14 @@ Vlc {
 			proxySpace.fadeTime = 2;
 			Server.default.waitForBoot( {
 				Vlc.afterBoot;
+				if(record,{Vlc.record});
 				"meow".postln;
 			});
 		});
 	}
 
 	*meowMeow {
-		Vlc.stopRecording;
+		if(recSynth.isNil.not,{Vlc.stopRecording});
 		fork {
 			2.wait;
 			Vlc.record;
@@ -71,7 +72,6 @@ Vlc {
 		Vlc.synths;
 		Vlc.outputs;
 		Vlc.jack;
-		Vlc.record;
 	}
 
 	*spaces {
@@ -111,7 +111,8 @@ Vlc {
 				\back -> ((17..24)-1),
 				\up -> ((25..32)-1),
 				\all -> ((1..32)-1),
-				\noup -> ((1..24)-1)
+				\noup -> ((1..24)-1),
+				\hall -> ((9..32)-1)
 			];
 			nchnls=32;
 			leftChannels = ([1,3,5,7]++(9..12)++(17..20)++(25..28))-1+mainBus.index;
@@ -151,10 +152,10 @@ Vlc {
 		~giG = 27;
 		~naG = 38;
 		~tunG = 29;
-		~geA = { Resonz.ar(SoundIn.ar(0),~geF.kr,bwr:1/~geQ.kr,mul:~geG.ar.dbamp) };
-		~giA = { Resonz.ar(SoundIn.ar(0),~giF.kr,bwr:1/~giQ.kr,mul:~giG.ar.dbamp) };
-		~naA = { Resonz.ar(SoundIn.ar(1),~naF.kr,bwr:1/~naQ.kr,mul:~naG.ar.dbamp) };
-		~tunA = { Resonz.ar(SoundIn.ar(1),~tunF.kr,bwr:1/~tunQ.kr,mul:~tunG.ar.dbamp) };
+		~geA = { Resonz.ar(SoundIn.ar(0),~geF.kr,bwr:1/~geQ.kr,mul:~geG.kr.dbamp) };
+		~giA = { Resonz.ar(SoundIn.ar(0),~giF.kr,bwr:1/~giQ.kr,mul:~giG.kr.dbamp) };
+		~naA = { Resonz.ar(SoundIn.ar(1),~naF.kr,bwr:1/~naQ.kr,mul:~naG.kr.dbamp) };
+		~tunA = { Resonz.ar(SoundIn.ar(1),~tunF.kr,bwr:1/~tunQ.kr,mul:~tunG.kr.dbamp) };
 		~ge = { Amplitude.ar(~geA.ar,0.001,0.03) };
 		~gi = { Amplitude.ar(~giA.ar,0.001,0.03) };
 		~na = { Amplitude.ar(~naA.ar,0.001,0.03) };
@@ -162,16 +163,16 @@ Vlc {
 	}
 
 	*synths {
-		SynthDef(\dly,{
+		/* SynthDef(\dly,{
 			arg sustain=0.5, dly=0.25, amp=0.1, out=0;
 			var audio,env;
 			env = Env.linen(0.005,sustain-0.01,0.005);
 			env = EnvGen.ar(env);
 			audio = (SoundIn.ar(0)+SoundIn.ar(1))*env;
-			audio = DelayN.ar(audio,dly,dly);
+			audio = DelayN.ar(audio,10.0,dly-~latency.kr);
 			env = EnvGen.ar(Env.linen(0.01,sustain+dly,0.01),doneAction:2);
 			Out.ar(out,audio*env);
-		}).add;
+		}).add; */ // this is a bad idea because of all the memory allocation
 		thisProcess.interpreter.executeFile("~/d0kt0r0.sc/synths.scd".standardizePath);
 	}
 
@@ -320,7 +321,11 @@ Vlc {
 
 	*quit {
 		Vlc.stopRecording;
-		fork { 1.wait; Server.default.quit; }
+		fork {
+			1.wait;
+			Server.default.quit;
+			"meow...".postln;
+		}
 	}
 
 	*latency_ { |x|
