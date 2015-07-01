@@ -399,14 +399,14 @@ Vlc {
 		^Tdef(name, { inf.do(def) });
 	}
 
-	*glide {
-		|dur=60,from=0,to=(-80)|
+	*penv {
+		|dur=60,to=(-100),from=0|
 		^(Pseq([0],inf)+Penv([from,to],[dur]));
 	}
 
 	*fade {
-		|dur=30,to=(-100)|
-		^(Pseq([0],inf)+Penv([0,to],[dur]));
+		|dur=60,to=(-100),from=0|
+		^(Pseq([0],inf)+Penv([from,to],[dur]));
 	}
 
 }
