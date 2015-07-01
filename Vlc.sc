@@ -90,8 +90,8 @@ Vlc {
 				\down -> ((1..12)-1)
 			];
 			nchnls=24;
-			leftChannels = [ ]; // *** missing ***
-			rightChannels = [ ]; // *** missing ***
+			leftChannels = [ ]+mainBus.index; // *** missing ***
+			rightChannels = [ ]+mainBus.index; // *** missing ***
 		});
 		if(config == \stereo,{
 			speakers = Dictionary[
@@ -100,8 +100,8 @@ Vlc {
 				\all -> [0,1],
 			];
 			nchnls=2;
-			leftChannels = [0];
-			rightChannels = [1];
+			leftChannels = [0]+mainBus.index;
+			rightChannels = [1]+mainBus.index;
 		});
 		if(config == \nime2015, {
 			speakers = Dictionary[
@@ -217,7 +217,7 @@ Vlc {
 	}
 
 	*connectJackTrip {
-		var serverName = if(snova==true,"supernova","sclang");
+		var serverName = if(snova==true,"supernova","scsynth");
 		("/usr/local/bin/jack_connect JackTrip:receive_1 "++serverName++":in1").systemCmd;
 		("/usr/local/bin/jack_connect JackTrip:receive_2 "++serverName++":in2").systemCmd;
 		("/usr/local/bin/jack_connect "++serverName++":out33 JackTrip:send_1").systemCmd;
@@ -226,7 +226,7 @@ Vlc {
 
 	*connectMainOuts {
 		|n|
-		var serverName = if(snova==true,"supernova","sclang");
+		var serverName = if(snova==true,"supernova","scsynth");
 		n.do {
 			|x|
 			var cmd = "/usr/local/bin/jack_connect "++serverName++":out" ++ ((x+1).asString) ++ " system:playback_" ++ ((x+1).asString);
@@ -399,15 +399,38 @@ Vlc {
 		^Tdef(name, { inf.do(def) });
 	}
 
+	*glide {
+		|dur=60,from=0,to=(-80)|
+		^(Pseq([0],inf)+Penv([from,to],[dur]));
+	}
+
+	*fade {
+		|dur=30,to=(-100)|
+		^(Pseq([0],inf)+Penv([0,to],[dur]));
+	}
+
 }
 
 
 + NodeProxy {
-
 	to {
 		| where |
 		this.playN(Vlc.to(where));
 		^this;
 	}
-
 }
+
++ Integer {
+	db {
+		^this.dbamp;
+	}
+}
+
++ Float {
+	db {
+		^this.dbamp;
+	}
+}
+
+
+
