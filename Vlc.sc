@@ -420,17 +420,6 @@ Vlc {
 	}
 }
 
-+ Integer {
-	db {
-		^this.dbamp;
-	}
-}
-
-+ Float {
-	db {
-		^this.dbamp;
-	}
-}
 
 
 

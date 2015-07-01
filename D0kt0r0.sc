@@ -30,6 +30,14 @@ D0kt0r0 {
 
 }
 
++ Integer {
+	db {
+		^this.dbamp;
+	}
+}
 
-
-
++ Float {
+	db {
+		^this.dbamp;
+	}
+}
