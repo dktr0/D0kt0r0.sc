@@ -388,7 +388,7 @@ Vlc {
 	*tri {
 		|notes=62,db=(-20)|
 		if(notes.isKindOf(NodeProxy),{
-			^LFTri.ar(Vlc.q(notes).midicps,mul:db.dbamp);
+			^LFTri.ar(notes.kr.midicps,mul:db.dbamp);
 		},{
 			^LFTri.ar(Vlc.q(notes).midicps,mul:db.dbamp);
 		});
