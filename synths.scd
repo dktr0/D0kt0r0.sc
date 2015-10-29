@@ -44,13 +44,13 @@ SynthDef(\x,
 
 SynthDef(\tine,
 	{
-		arg freq=440,amp=0.1,gate=0.5,out=0,lpf=14000;
+		arg freq=440,amp=0.1,gate=0.5,out=0,lpf=14000,attack=0.001,mul=1;
 		var mod,car,env;
 		mod = Env.pairs([[0,12],[0.4,0.5]],-8);
 		mod = EnvGen.ar(mod);
-		mod = SinOsc.ar(freq*12.8,mul:freq*mod,add:freq);
+		mod = SinOsc.ar(freq*12.8,mul:freq*mod,add:freq*mul);
 		car = SinOsc.ar(mod,mul:amp);
-		env = Env.adsr(0.001,0.01,-5.dbamp,0.1,curve:-4);
+		env = Env.adsr(attack,0.01,-5.dbamp,0.1,curve:-4);
 		env = EnvGen.ar(env,gate:gate,doneAction:2);
 		car = LPF.ar(car*env,freq:lpf);
 		car = car*SinOsc.ar(1,mul:0.1,add:1);
@@ -146,9 +146,10 @@ SynthDef(\blip,
 
 SynthDef(\splat,
 	{
-		arg freq = 60, out = 0, amp = 0.1, sustain = 0.051;
+		arg freq = 60, out = 0, amp = 0.1, sustain = 0.051, lpf = 10000;
 		var audio = PinkNoise.ar(amp);
 		audio = audio * EnvGen.ar(Env.perc(0.001,sustain - 0.001), doneAction: 2);
+		audio = LPF.ar(audio,freq:lpf);
 		Out.ar(out,audio);
 }).add;
 

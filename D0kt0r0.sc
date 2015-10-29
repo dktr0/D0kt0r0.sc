@@ -3,6 +3,7 @@ D0kt0r0 {
 	*boot {
 		|numChannels=2,sampleRate = 48000|
 		var devices = [
+			"Quartet",
 			"MOTU UltraLite mk3 Hybrid",
 			"MOTU 828mk3 Hybrid",
 			"PreSonus FireStudio"].asSet;
