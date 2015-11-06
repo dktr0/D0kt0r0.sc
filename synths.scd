@@ -2,6 +2,18 @@
 
 (
 
+SynthDef(\nov05,{
+    arg freq=440,amp=0.1,sustain=1.0,out=0,lpf=1000;
+    var audio,env;
+	freq = Clip.kr(freq,10,3000);
+    sustain = Clip.kr(sustain,0.201,1000);
+    audio = Pulse.ar(freq:freq,mul:amp);
+    audio = LPF.ar(audio,freq:lpf);
+    env = Env.new([0,1,0],[sustain/2,sustain/2]);
+    audio = audio * EnvGen.ar(env,doneAction:2);
+    Out.ar(out,audio);
+}).add;
+
 SynthDef(\shift,
 	{
 		arg in = 0, out = 0, amp = 0.1, delay = 1.0, sustain = 0.050;
