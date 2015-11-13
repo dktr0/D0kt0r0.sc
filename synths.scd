@@ -2,6 +2,21 @@
 
 (
 
+SynthDef(\rezon,{
+    arg freq=440,amp=0.1,gate=1.0,out=0;
+    var audio,env;
+	freq = Clip.kr(freq,10,3520);
+	amp = Clip.kr(amp,0,2);
+	amp = amp * (30.dbamp);
+    audio = WhiteNoise.ar(mul:amp);
+	audio = audio + Saw.ar(freq,mul:amp*(-15.dbamp));
+	audio = Resonz.ar(audio,freq,bwr:0.005);
+	env = Env.adsr(0.1,0.1,-1.dbamp,0.75,curve:0.9);
+    audio = audio * EnvGen.ar(env,doneAction:2,gate:gate);
+	audio = Compander.ar(audio,audio,-3.dbamp,slopeAbove:0.05,clampTime:0.01,relaxTime:0.3);
+    Out.ar(out,audio);
+}).add;
+
 SynthDef(\nov05,{
     arg freq=440,amp=0.1,sustain=1.0,out=0,lpf=1000;
     var audio,env;
