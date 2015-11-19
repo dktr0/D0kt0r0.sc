@@ -85,6 +85,22 @@ SynthDef(\tine,
 	}
 ).add;
 
+SynthDef(\revtine,
+	{
+		arg freq=440,amp=0.1,gate=0.5,out=0,lpf=14000,attack=0.001,mul=1;
+		var mod,car,env;
+		mod = Env.pairs([[0,12],[0.4,0.5]],-8);
+		mod = EnvGen.ar(mod);
+		mod = SinOsc.ar(freq*12.8,mul:freq*mod,add:freq*mul);
+		car = SinOsc.ar(mod,mul:amp);
+		env = Env.adsr(attack,0.01,-5.dbamp,0.1,curve:-4);
+		env = 1 - EnvGen.ar(env,gate:gate,doneAction:2);
+		car = LPF.ar(car*env,freq:lpf);
+		car = car*SinOsc.ar(1,mul:0.1,add:1);
+		Out.ar(out,car*env);
+	}
+).add;
+
 c = Buffer.alloc(Server.default,16384);
 c.cheby([1,0,0.5,0,0.5,0.2,0.5,0.1,0.1,0.1,0.1,0.1]);
 SynthDef(\chebyBass,
