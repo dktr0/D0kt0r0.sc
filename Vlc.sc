@@ -19,7 +19,7 @@ Vlc {
 	}
 
 	*meow {
-		| cfg=\stereo, device="jack", supernova=false, sampleRate=48000, record=true |
+		| cfg=\stereo, device="MOTU UltraLite mk3 Hybrid", supernova=false, sampleRate=48000, record=true |
 		myAddress = "130.39.92.9";
 		shawnsAddress = "132.206.162.199";
 		qRange = 0.03;
@@ -160,8 +160,12 @@ Vlc {
 		~noTablaThreshold = -10;
 		~noTablaRatio = 5;
 		~tabla.fadeTime = 4;
-		~tabla = -100;
+		~tabla = -120;
+		~tablaReverb = -120;
 		~code = -10;
+		~codeReverb = -120;
+		~reverbRoom = 0.2;
+		~reverbDamp = 0;
 		~stereo = {SoundIn.ar([1,0])};
 		~mono = {SoundIn.ar(0)+SoundIn.ar(1)};
 		~env = {Amplitude.ar(SoundIn.ar(0)+SoundIn.ar(1),0.003,0.18)};
@@ -175,13 +179,13 @@ Vlc {
 		~giQ = 40;
 		~naQ = 400;
 		~na2Q = 400;
-		~tunQ = 6400;
+		~tunQ = 12000;
 		~tun2Q = 6400;
 		~geG = 15;
-		~giG = 27;
-		~naG = 38;
+		~giG = 7; // was 27 (but down 20 db for PASIC?)
+		~naG = 18; // ditto
 		~na2G = 38;
-		~tunG = 29;
+		~tunG = 9; // ditto
 		~tun2G = 29;
 		~geA = { Resonz.ar(SoundIn.ar(0),~geF.kr,bwr:1/~geQ.kr,mul:~geG.kr.dbamp) };
 		~giA = { Resonz.ar(SoundIn.ar(0),~giF.kr,bwr:1/~giQ.kr,mul:~giG.kr.dbamp) };
@@ -225,9 +229,23 @@ Vlc {
 			var audio = In.ar(mainBus.index,nchnls);
 			audio = DelayN.ar(audio,0.5,~latency.kr)*env;
 			audio = audio * ~gain.kr.dbamp;
+			audio = audio + FreeVerb.ar(audio,mix:1,
+				room:Clip.kr(~reverbRoom.kr,0,1),
+				damp:Clip.kr(~reverbDamp.kr,0,1),
+				mul:~codeReverb.kr.dbamp);
 			audio = Compander.ar(audio,audio,thresh:~threshold.kr.dbamp,slopeAbove:1/~ratio.kr,clampTime:0.002,relaxTime:0.1);
 			Out.ar(0,audio);
 		}).play(target:outputGroup);
+	}
+
+	*tablaLive {
+		| x=(-25) |
+		~tablaOut = {
+			var audio = SoundIn.ar(0)+SoundIn.ar(1);
+			audio = audio * (x.dbamp);
+			[audio,audio];
+		};
+		~tablaOut.to(\all);
 	}
 
 	*playTablaSynth {
@@ -237,10 +255,15 @@ Vlc {
 			var env,audio;
 			// this is still not perfect - would be better if
 			// ~tabla.kr.dbamp was at its value of -100 dB from beginning...
-			env = Lag.ar(K2A.ar(~tabla.kr.dbamp),lagTime:4);
+			// env = Lag.ar(K2A.ar(~tabla.kr.dbamp),lagTime:4);
+			env = Lag.ar(K2A.ar(-25.dbamp),lagTime:4);
 			env = K2A.ar(0);
 			env = env * EnvGen.ar(Env.pairs([[0,0],[8,0],[9,1]],\lin));
 			audio = Mix.new([SoundIn.ar(0),SoundIn.ar(1)])*env*0.5;
+			//audio = audio + FreeVerb.ar(audio,mix:1,
+			//	room:Clip.kr(~reverbRoom.kr,0,1),
+			//	damp:Clip.kr(~reverbDamp.kr,0,1),
+			//	mul:~tablaReverb.kr.dbamp);
 			Out.ar(0,audio!2);
 		}).play(target:outputGroup);
 	}
