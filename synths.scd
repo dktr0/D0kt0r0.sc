@@ -190,7 +190,7 @@ SynthDef(\blip,
 SynthDef(\splat,
 	{
 		arg freq = 60, out = 0, amp = 0.1, sustain = 0.051, lpf = 10000;
-		var audio = PinkNoise.ar(amp);
+		var audio = WhiteNoise.ar(amp);
 		audio = audio * EnvGen.ar(Env.perc(0.001,sustain - 0.001), doneAction: 2);
 		audio = LPF.ar(audio,freq:lpf);
 		Out.ar(out,audio);
@@ -213,6 +213,16 @@ SynthDef(\swell,
 		audio = audio*EnvGen.ar(Env.linen((sustain-0.001)*0.33,0.001,(sustain-0.001)*0.67), doneAction: 2);
 		Out.ar(out,audio);
 }).add;
+
+SynthDef(\sawswell,
+	{
+		arg freq = 440, out = 0, amp = 0.1, lpf = 2500, sustain = 6.001, fnoise = 0.003;
+		var audio = Saw.ar(freq*Rand(1-fnoise,1+fnoise), mul: amp);
+		audio = LPF.ar(audio, freq: lpf);
+		audio = audio*EnvGen.ar(Env.linen((sustain-0.001)*0.33,0.001,(sustain-0.001)*0.67), doneAction: 2);
+		Out.ar(out,audio);
+}).add;
+
 
 SynthDef(\saw,
 	{
