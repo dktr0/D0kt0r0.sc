@@ -2,6 +2,22 @@
 
 (
 
+SynthDef(\g,
+	{
+		arg quot=1,freq=440,amp=0.1,out=0,gate=1,lpf=5000,bwr=0.001;
+		var audio,env,rfreq;
+		freq = Clip.kr(freq,10,2640);
+		rfreq = freq/quot;
+		amp = amp * (20.dbamp) * ((bwr.ampdb*(-0.85)).dbamp);
+		audio = Saw.ar(freq,amp) * Resonz.ar(PinkNoise.ar(),freq:freq/quot,mul:0.dbamp,bwr:bwr);
+		env = EnvGen.ar(Env.adsr(0.001,0.001,-3.dbamp,0.025),gate:gate,doneAction:2);
+		audio = audio*env;
+		audio = LPF.ar(audio,freq:lpf);
+		audio = Compander.ar(audio,audio,thresh:-3.dbamp,slopeAbove:0.05,clampTime:0.001);
+		Out.ar(out,audio);
+	}
+).add;
+
 SynthDef(\rezon,{
     arg freq=440,amp=0.1,gate=1.0,out=0;
     var audio,env;
