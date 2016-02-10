@@ -14,12 +14,16 @@ Sinfonia {
 	}
 
 	*boot { // for live coding soloist only
-		MIDIClient.init;
-		piano = MIDIOut.newByName("IAC Driver", "Bus 1");
-		Pdef(\piano,Pbind(\type,\midi,\midiout,Sinfonia.piano));
 		D0kt0r0.boot;
 		D0kt0r0.synths;
 		Sinfonia.firstSynth;
+		Sinfonia.bootMidi;
+	}
+
+	*bootMidi {
+		MIDIClient.init;
+		piano = MIDIOut.newByName("IAC Driver", "Bus 1");
+		Pdef(\piano,Pbind(\type,\midi,\midiout,Sinfonia.piano));
 	}
 
 	*start { // for orchestra members only
@@ -289,14 +293,21 @@ Sinfonia {
 		// groove, in C, with a fixed rhythmic pattern (tabla and code only)
 		TempoClock.tempo = 112/60;
 		Tdef(\thirdMovement, {
-			Sinfonia.thirdMaterial(0); 64.wait;
-			Sinfonia.thirdMaterial(1); 64.wait;
-			Sinfonia.thirdMaterial(2); 64.wait;
-			Sinfonia.thirdMaterial(3); 64.wait;
-			Sinfonia.thirdMaterial(4); 64.wait;
-			Sinfonia.thirdMaterial(5); 64.wait;
-			Sinfonia.thirdMaterial(6); 64.wait;
-			Sinfonia.thirdMaterial(7); 64.wait;
+			Pdef(\passacaglia,Pbind(
+				\instrument,\chebyBass,
+				\midinote,Pseq([24,26,30,28,31,26,23],inf),
+				\dur,4,\legato,1.05,
+				\out,Pdefn(\all)
+			)).play(quant:4);
+			56.wait;
+			Sinfonia.thirdMaterial(0); 56.wait;
+			Sinfonia.thirdMaterial(1); 56.wait;
+			Sinfonia.thirdMaterial(2); 56.wait;
+			Sinfonia.thirdMaterial(3); 56.wait;
+			Sinfonia.thirdMaterial(4); 56.wait;
+			Sinfonia.thirdMaterial(5); 56.wait;
+			Sinfonia.thirdMaterial(6); 56.wait;
+			Sinfonia.thirdMaterial(7); 56.wait;
 		}).play(quant:4);
 	}
 

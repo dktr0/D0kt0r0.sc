@@ -245,7 +245,7 @@ Vlc {
 			audio = audio * (x.dbamp);
 			[audio,audio];
 		};
-		~tablaOut.to(\all);
+		~tablaOut.play([0,1]);
 	}
 
 	*playTablaSynth {
