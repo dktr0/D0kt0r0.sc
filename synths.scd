@@ -2,6 +2,64 @@
 
 (
 
+SynthDef(\g,
+	{
+		arg quot=1,freq=440,amp=0.1,out=0,gate=1,lpf=5000,bwr=0.001;
+		var audio,env,rfreq;
+		freq = Clip.kr(freq,10,2640);
+		rfreq = freq/quot;
+		amp = amp * (20.dbamp) * ((bwr.ampdb*(-0.85)).dbamp);
+		audio = Saw.ar(freq,amp) * Resonz.ar(PinkNoise.ar(),freq:freq/quot,mul:0.dbamp,bwr:bwr);
+		env = EnvGen.ar(Env.adsr(0.001,0.001,-3.dbamp,0.025),gate:gate,doneAction:2);
+		audio = audio*env;
+		audio = LPF.ar(audio,freq:lpf);
+		audio = Compander.ar(audio,audio,thresh:-3.dbamp,slopeAbove:0.05,clampTime:0.001);
+		Out.ar(out,audio);
+	}
+).add;
+
+SynthDef(\rezon,{
+    arg freq=440,amp=0.1,gate=1.0,out=0;
+    var audio,env;
+	freq = Clip.kr(freq,10,3520);
+	amp = Clip.kr(amp,0,2);
+	amp = amp * (30.dbamp);
+    audio = WhiteNoise.ar(mul:amp);
+	audio = audio + Saw.ar(freq,mul:amp*(-15.dbamp));
+	audio = Resonz.ar(audio,freq,bwr:0.005);
+	env = Env.adsr(0.1,0.1,-1.dbamp,0.75,curve:0.9);
+    audio = audio * EnvGen.ar(env,doneAction:2,gate:gate);
+	audio = Compander.ar(audio,audio,-3.dbamp,slopeAbove:0.05,clampTime:0.01,relaxTime:0.3);
+    Out.ar(out,audio);
+}).add;
+
+SynthDef(\rezonSwell,{
+    arg freq=440,amp=0.1,sustain=1.0,out=0;
+    var audio,env;
+	freq = Clip.kr(freq,10,3520);
+	amp = Clip.kr(amp,0,2);
+	amp = amp * (30.dbamp);
+    audio = WhiteNoise.ar(mul:amp);
+	audio = audio + Saw.ar(freq,mul:amp*(-15.dbamp));
+	audio = Resonz.ar(audio,freq,bwr:0.005);
+	env = Env.linen(sustain*2/5,sustain*1/5,sustain*2/5);
+    audio = audio * EnvGen.ar(env,doneAction:2);
+	audio = Compander.ar(audio,audio,-3.dbamp,slopeAbove:0.05,clampTime:0.01,relaxTime:0.3);
+    Out.ar(out,audio);
+}).add;
+
+SynthDef(\nov05,{
+    arg freq=440,amp=0.1,sustain=1.0,out=0,lpf=1000;
+    var audio,env;
+	freq = Clip.kr(freq,10,3000);
+    sustain = Clip.kr(sustain,0.201,1000);
+    audio = Pulse.ar(freq:freq,mul:amp);
+    audio = LPF.ar(audio,freq:lpf);
+    env = Env.new([0,1,0],[sustain/2,sustain/2]);
+    audio = audio * EnvGen.ar(env,doneAction:2);
+    Out.ar(out,audio);
+}).add;
+
 SynthDef(\shift,
 	{
 		arg in = 0, out = 0, amp = 0.1, delay = 1.0, sustain = 0.050;
@@ -44,14 +102,30 @@ SynthDef(\x,
 
 SynthDef(\tine,
 	{
-		arg freq=440,amp=0.1,gate=0.5,out=0,lpf=14000;
+		arg freq=440,amp=0.1,gate=0.5,out=0,lpf=14000,attack=0.001,mul=1;
 		var mod,car,env;
 		mod = Env.pairs([[0,12],[0.4,0.5]],-8);
 		mod = EnvGen.ar(mod);
-		mod = SinOsc.ar(freq*12.8,mul:freq*mod,add:freq);
+		mod = SinOsc.ar(freq*12.8,mul:freq*mod,add:freq*mul);
 		car = SinOsc.ar(mod,mul:amp);
-		env = Env.adsr(0.001,0.01,-5.dbamp,0.1,curve:-4);
+		env = Env.adsr(attack,0.01,-5.dbamp,0.1,curve:-4);
 		env = EnvGen.ar(env,gate:gate,doneAction:2);
+		car = LPF.ar(car*env,freq:lpf);
+		car = car*SinOsc.ar(1,mul:0.1,add:1);
+		Out.ar(out,car*env);
+	}
+).add;
+
+SynthDef(\revtine,
+	{
+		arg freq=440,amp=0.1,gate=0.5,out=0,lpf=14000,attack=0.001,mul=1;
+		var mod,car,env;
+		mod = Env.pairs([[0,12],[0.4,0.5]],-8);
+		mod = EnvGen.ar(mod);
+		mod = SinOsc.ar(freq*12.8,mul:freq*mod,add:freq*mul);
+		car = SinOsc.ar(mod,mul:amp);
+		env = Env.adsr(attack,0.01,-5.dbamp,0.1,curve:-4);
+		env = 1 - EnvGen.ar(env,gate:gate,doneAction:2);
 		car = LPF.ar(car*env,freq:lpf);
 		car = car*SinOsc.ar(1,mul:0.1,add:1);
 		Out.ar(out,car*env);
@@ -146,9 +220,10 @@ SynthDef(\blip,
 
 SynthDef(\splat,
 	{
-		arg freq = 60, out = 0, amp = 0.1, sustain = 0.051;
-		var audio = PinkNoise.ar(amp);
+		arg freq = 60, out = 0, amp = 0.1, sustain = 0.051, lpf = 10000;
+		var audio = WhiteNoise.ar(amp);
 		audio = audio * EnvGen.ar(Env.perc(0.001,sustain - 0.001), doneAction: 2);
+		audio = LPF.ar(audio,freq:lpf);
 		Out.ar(out,audio);
 }).add;
 
@@ -169,6 +244,16 @@ SynthDef(\swell,
 		audio = audio*EnvGen.ar(Env.linen((sustain-0.001)*0.33,0.001,(sustain-0.001)*0.67), doneAction: 2);
 		Out.ar(out,audio);
 }).add;
+
+SynthDef(\sawswell,
+	{
+		arg freq = 440, out = 0, amp = 0.1, lpf = 2500, sustain = 6.001, fnoise = 0.003;
+		var audio = Saw.ar(freq*Rand(1-fnoise,1+fnoise), mul: amp);
+		audio = LPF.ar(audio, freq: lpf);
+		audio = audio*EnvGen.ar(Env.linen((sustain-0.001)*0.33,0.001,(sustain-0.001)*0.67), doneAction: 2);
+		Out.ar(out,audio);
+}).add;
+
 
 SynthDef(\saw,
 	{
