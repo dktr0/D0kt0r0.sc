@@ -37,7 +37,7 @@ Vlc {
 				Vlc.nodes;
 				Vlc.synths;
 				Vlc.outputs;
-				if(jack,{Vlc.jack});
+				// if(jack,{Vlc.jack});
 				if(record,{Vlc.record});
 				"meow meow meow".postln;
 			};
@@ -218,10 +218,10 @@ Vlc {
 
 	*connectJackTrip {
 		var serverName = if(snova==true,"supernova","scsynth");
-		("/usr/local/bin/jack_connect JackTrip:receive_1 "++serverName++":in1").systemCmd;
-		("/usr/local/bin/jack_connect JackTrip:receive_2 "++serverName++":in2").systemCmd;
-		("/usr/local/bin/jack_connect "++serverName++":out33 JackTrip:send_1").systemCmd;
-		("/usr/local/bin/jack_connect "++serverName++":out34 JackTrip:send_2").systemCmd;
+		("/usr/local/bin/jack_connect shawn:receive_1 "++serverName++":in1").systemCmd;
+		("/usr/local/bin/jack_connect shawn:receive_2 "++serverName++":in2").systemCmd;
+		("/usr/local/bin/jack_connect "++serverName++":out33 shawn:send_1").systemCmd;
+		("/usr/local/bin/jack_connect "++serverName++":out34 shawn:send_2").systemCmd;
 	}
 
 	*connectMainOuts {
