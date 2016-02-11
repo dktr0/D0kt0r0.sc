@@ -255,10 +255,8 @@ Vlc {
 			var env,audio;
 			// this is still not perfect - would be better if
 			// ~tabla.kr.dbamp was at its value of -100 dB from beginning...
-			// env = Lag.ar(K2A.ar(~tabla.kr.dbamp),lagTime:4);
-			env = Lag.ar(K2A.ar(-25.dbamp),lagTime:4);
-			env = K2A.ar(0);
-			env = env * EnvGen.ar(Env.pairs([[0,0],[8,0],[9,1]],\lin));
+			env = Lag.ar(K2A.ar(~tabla.kr.dbamp),lagTime:4);
+			env = env * EnvGen.ar(Env.new([0,0,1],[4,4]));
 			audio = Mix.new([SoundIn.ar(0),SoundIn.ar(1)])*env*0.5;
 			//audio = audio + FreeVerb.ar(audio,mix:1,
 			//	room:Clip.kr(~reverbRoom.kr,0,1),

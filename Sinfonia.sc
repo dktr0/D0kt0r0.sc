@@ -292,59 +292,46 @@ Sinfonia {
 	*thirdMovement {
 		// groove, in C, with a fixed rhythmic pattern (tabla and code only)
 		TempoClock.tempo = 112/60;
+		// j: isolated notes, soloist and orchestra, descending, free time
+		// try to use different instruments for each note, or at least make a different sound
+		// C B A  G E F# D C
+		// 96 84 72 60 48 36... (24)
+	}
+
+	*k {
 		Tdef(\thirdMovement, {
+			// k is 196 beats (7 times 7 bars times 4 beats)
+			Pdef(\passacaglia,Pbind(
+				\instrument,\chebyBass,
+				\midinote,Pseq([24],1),
+				\dur,28,\legato,1.05,
+				\out,0
+			)).play(quant:4);
+			28.wait;
 			Pdef(\passacaglia,Pbind(
 				\instrument,\chebyBass,
 				\midinote,Pseq([24,26,30,28,31,26,23],inf),
 				\dur,4,\legato,1.05,
-				\out,Pdefn(\all)
+				\out,0
 			)).play(quant:4);
-			56.wait;
-			Sinfonia.thirdMaterial(0); 56.wait;
-			Sinfonia.thirdMaterial(1); 56.wait;
-			Sinfonia.thirdMaterial(2); 56.wait;
-			Sinfonia.thirdMaterial(3); 56.wait;
-			Sinfonia.thirdMaterial(4); 56.wait;
-			Sinfonia.thirdMaterial(5); 56.wait;
-			Sinfonia.thirdMaterial(6); 56.wait;
-			Sinfonia.thirdMaterial(7); 56.wait;
-		}).play(quant:4);
+			Sinfonia.thirdMaterial(0); 28.wait;
+			Sinfonia.thirdMaterial(1); 28.wait;
+			Sinfonia.thirdMaterial(2); 28.wait;
+			Sinfonia.thirdMaterial(3); 28.wait;
+			Sinfonia.thirdMaterial(4); 28.wait;
+			Sinfonia.thirdMaterial(5); 28.wait;
+
+			// l: voice enters
+			Sinfonia.thirdMaterial(6); 196.wait;
+
+			// m: delay of voice decays, beats are most intense
+			Sinfonia.thirdMaterial(7); 196.wait;
+
+			// n:
+			Sinfonia.thirdMaterial(8); 84.wait;
+			Sinfonia.thirdMaterial(9); 56.wait;
+			Sinfonia.thirdMaterial(10); 56.wait;
+			Sinfonia.thirdMaterial(11);
+		}).play(quant:1);
 	}
-
-	*k { Sinfonia.thirdMaterial(8); }
-	*l { Sinfonia.thirdMaterial(9); }
-	*m { Sinfonia.thirdMaterial(10); }
-	*n { Sinfonia.thirdMaterial(11); }
-
-	*fourthMovement {
-		Tdef(\two).stop;
-		Tdef(\four).play;
-		// passacaglia, fixed harmonies and rhythms, 3/4
-		// 1: just "bassline" - orchestrated in live code to descend over first n variations
-		// 2: add tabla, basically quarters (not downbeats)
-		// 3: add orchestra
-		// 4: add ghost piano
-		// 5: add voice (lower octave)
-		// 6: add voice (higher octave)
-		// etc
-
-		// o: isolated notes, soloist and orchestra, descending, free time
-		// try to use different instruments for each note, or at least make a different sound
-		// C B A  G E F# D C
-		// 96 84 72 60 48 36... (24)
-
-		// p: bass line synchronized with groove, works by itself
-		// (chord is distributed to laptop orchestra)
-		// C D F# E G D B C
-		// 24 36 48 60 72 84 96
-		// q:
-		// r:
-		// s:
-		// t:
-		// u:
-		// v:
-		// w:
-
-	}
-
 }

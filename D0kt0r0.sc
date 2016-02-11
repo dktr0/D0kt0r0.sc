@@ -1,7 +1,7 @@
 D0kt0r0 {
 
 	*boot {
-		|numChannels=2,sampleRate = 48000|
+		|numChannels=2,numInputs=2,sampleRate = 48000|
 		var devices = [
 			"Quartet",
 			"MOTU UltraLite mk3 Hybrid",
@@ -15,6 +15,7 @@ D0kt0r0 {
 			Server.local.options.outDevice = "Built-in Output";
 		});
 		Server.local.options.numOutputBusChannels = numChannels;
+		Server.local.options.numInputBusChannels = numInputs;
 		Server.local.options.memSize = 1024*512;
 		Server.local.options.sampleRate = sampleRate;
 		Server.default = Server.local;
