@@ -2,6 +2,12 @@
 
 (
 
+SynthDef(\rest,{
+	arg sustain=0.1;
+	EnvGen.ar(Env.new([0,1],[sustain]),doneAction:2);
+	Out.ar(0,0);
+}).add;
+
 SynthDef(\g,
 	{
 		arg quot=1,freq=440,amp=0.1,out=0,gate=1,lpf=5000,bwr=0.001;
@@ -145,6 +151,38 @@ SynthDef(\chebyBass,
 	}
 ).add;
 
+SynthDef(\cblip,
+	{
+		arg freq = 60, out = 0, amp = 0.1, sustain = 0.099, lpf=10000, preamp=1;
+		var audio;
+		audio = Blip.ar(freq, mul:preamp);
+		audio = Shaper.ar(c.bufnum,audio,mul:amp);
+		audio = audio * EnvGen.ar(Env.perc(0.001,sustain-0.001), doneAction: 2);
+		audio = LPF.ar(audio,freq:lpf);
+		Out.ar(out,audio);
+}).add;
+
+SynthDef(\click,
+	{
+		arg freq = 60, out = 0, amp = 0.1, sustain = 0.099, lpf=10000;
+		var audio;
+		audio = Impulse.ar(0,mul:amp);
+		audio = audio * EnvGen.ar(Env.new([1,0],[0.050]), doneAction: 2);
+		audio = LPF.ar(audio,freq:lpf);
+		Out.ar(out,audio);
+}).add;
+
+SynthDef(\burst,
+	{
+		arg freq = 60, out = 0, amp = 0.1, sustain = 0.099, lpf=10000;
+		var audio;
+		audio = WhiteNoise.ar(mul:amp*(80.dbamp));
+		audio = Resonz.ar(audio,freq:freq,bwr:0.01);
+		audio = audio * EnvGen.ar(Env.new([1,0],[0.005]), doneAction: 2);
+		audio = LPF.ar(audio,freq:lpf);
+		Out.ar(out,audio);
+}).add;
+
 SynthDef(\fmSwell,
 	{
 		arg freq, index = 15, amp = 0.03, out = 0, hpf = 1000;
@@ -211,10 +249,11 @@ SynthDef(\kick,
 
 SynthDef(\blip,
 	{
-		arg freq = 60, out = 0, amp = 0.1, sustain = 0.099;
+		arg freq = 60, out = 0, amp = 0.1, sustain = 0.099, lpf = 10000;
 		var audio;
 		audio = Blip.ar(freq, mul: amp);
 		audio = audio * EnvGen.ar(Env.perc(0.001,sustain-0.001), doneAction: 2);
+		audio = LPF.ar(audio,freq:lpf);
 		Out.ar(out,audio);
 }).add;
 
@@ -247,7 +286,7 @@ SynthDef(\swell,
 
 SynthDef(\sawswell,
 	{
-		arg freq = 440, out = 0, amp = 0.1, lpf = 2500, sustain = 6.001, fnoise = 0.003;
+		arg freq = 440, out = 0, amp = 0.1, sustain = 6.001, fnoise = 0.003, lpf = 10000;
 		var audio = Saw.ar(freq*Rand(1-fnoise,1+fnoise), mul: amp);
 		audio = LPF.ar(audio, freq: lpf);
 		audio = audio*EnvGen.ar(Env.linen((sustain-0.001)*0.33,0.001,(sustain-0.001)*0.67), doneAction: 2);
