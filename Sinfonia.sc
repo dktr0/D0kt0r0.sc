@@ -17,7 +17,7 @@ Sinfonia {
 
 	*initClass {
 		allow = false;
-		nchnls = 36;
+		nchnls = 2;
 		latency1 = 0.32;
 		latency2 = 0.19;
 		Sinfonia.broadcast_("192.168.0.255");
@@ -38,7 +38,7 @@ Sinfonia {
 			Server.local.options.device = "JackRouter";
 		});
 		Server.local.options.sampleRate = 48000;
-		Server.local.options.numInputBusChannels = 8;  // tabla*2,voice,empty,piano*2,room*2
+		Server.local.options.numInputBusChannels = 8;
 		Server.local.options.numOutputBusChannels = 40;
 		Server.local.options.numAudioBusChannels = 256;
 		Server.local.options.memSize = 8192*64;
@@ -261,7 +261,8 @@ Sinfonia {
 		// a. from long string-like tones to pointy flourishes
 		// b. tabla joins near end of movement, call and response
 		// c. interrupted; final flourish reduces down to low E (various timbres)
-		Sinfonia.record;
+		// Sinfonia.record;
+		Sinfonia.firstSynth;
 		Sinfonia.firstMaterial(0);
 		Pdefn(\instrument,\melody);
 		Pdef(\first,Pbind(

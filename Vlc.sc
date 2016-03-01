@@ -13,13 +13,14 @@ Vlc {
 	classvar recSynth,recBuffer;
 	classvar <>qRange;
 	classvar <>myAddress,<>shawnsAddress;
+	classvar <o;
 
 	*devices {
 		^ServerOptions.devices;
 	}
 
 	*meow {
-		| cfg=\stereo, device="MOTU UltraLite mk3 Hybrid", supernova=false, sampleRate=48000, record=true |
+		| cfg=\stereo, device="Fireface 400 (727)", supernova=false, sampleRate=48000, record=true |
 		myAddress = "130.39.92.9";
 		shawnsAddress = "132.206.162.199";
 		qRange = 0.03;
@@ -33,12 +34,10 @@ Vlc {
 			{
 				usingJack=false;
 				Server.default.options.device = device;
-				Server.default.options.inDevice = "MOTU UltraLite mk3 Hybrid";
-				Server.default.options.inDevice = "MOTU UltraLite mk3 Hybrid";
 		});
 		Server.default.options.sampleRate = sampleRate;
-		Server.default.options.numOutputBusChannels = 34;
-		Server.default.options.numInputBusChannels = 14;
+		Server.default.options.numOutputBusChannels = 2;
+		Server.default.options.numInputBusChannels = 2;
 		Server.default.options.numAudioBusChannels = 256;
 		if(Server.default.serverRunning,{
 			Vlc.stopRecording; // a second meow restarts recording and resets key resources with no reboot
@@ -75,6 +74,7 @@ Vlc {
 
 	*afterBoot {
 		mainBus = Bus.audio(Server.default,32);
+		o = mainBus.index;
 		jitGroup = Group.head;
 		mainGroup = ParGroup.tail;
 		outputGroup = ParGroup.tail;
@@ -156,9 +156,10 @@ Vlc {
 		~gain = 0;
 		~threshold = -3;
 		~ratio = 10;
+		~hall = 0;
 		~noTabla = 5;
-		~noTablaThreshold = -10;
-		~noTablaRatio = 5;
+		//~noTablaThreshold = -10;
+		//~noTablaRatio = 5;
 		~tabla.fadeTime = 4;
 		~tabla = -120;
 		~tablaReverb = -120;
@@ -169,11 +170,11 @@ Vlc {
 		~stereo = {SoundIn.ar([1,0])};
 		~mono = {SoundIn.ar(0)+SoundIn.ar(1)};
 		~env = {Amplitude.ar(SoundIn.ar(0)+SoundIn.ar(1),0.003,0.18)};
-		~geF = 38.midicps;
-		~giF = 50.midicps;
-		~naF = 74.midicps;
+		~geF = 36.midicps;
+		~giF = 48.midicps;
+		~naF = 72.midicps;
 		~na2F = 73.midicps;
-		~tunF = 64.midicps;
+		~tunF = 62.midicps;
 		~tun2F = 63.midicps;
 		~geQ = 40;
 		~giQ = 40;
@@ -181,12 +182,12 @@ Vlc {
 		~na2Q = 400;
 		~tunQ = 12000;
 		~tun2Q = 6400;
-		~geG = 15;
-		~giG = 7; // was 27 (but down 20 db for PASIC?)
-		~naG = 18; // ditto
+		~geG = 5;
+		~giG = 7;
+		~naG = 28;
 		~na2G = 38;
-		~tunG = 9; // ditto
-		~tun2G = 29;
+		~tunG = -120;
+		~tun2G = -120;
 		~geA = { Resonz.ar(SoundIn.ar(0),~geF.kr,bwr:1/~geQ.kr,mul:~geG.kr.dbamp) };
 		~giA = { Resonz.ar(SoundIn.ar(0),~giF.kr,bwr:1/~giQ.kr,mul:~giG.kr.dbamp) };
 		~naA = { Resonz.ar(SoundIn.ar(1),~naF.kr,bwr:1/~naQ.kr,mul:~naG.kr.dbamp) };
@@ -202,23 +203,13 @@ Vlc {
 	}
 
 	*synths {
-		/* SynthDef(\dly,{
-			arg sustain=0.5, dly=0.25, amp=0.1, out=0;
-			var audio,env;
-			env = Env.linen(0.005,sustain-0.01,0.005);
-			env = EnvGen.ar(env);
-			audio = (SoundIn.ar(0)+SoundIn.ar(1))*env;
-			audio = DelayN.ar(audio,10.0,dly-~latency.kr);
-			env = EnvGen.ar(Env.linen(0.01,sustain+dly,0.01),doneAction:2);
-			Out.ar(out,audio*env);
-		}).add; */ // this is a bad idea because of all the memory allocation
-		thisProcess.interpreter.executeFile("~/d0kt0r0.sc/synths.scd".standardizePath);
+		D0kt0r0.synths;
 	}
 
 	*outputs {
-		Vlc.playDelayedSynth;
+		// Vlc.playDelayedSynth;
 		Vlc.playNoTablaSynth;
-		Vlc.playTablaSynth;
+		// Vlc.playTablaSynth;
 	}
 
 	*playDelayedSynth {
@@ -238,16 +229,6 @@ Vlc {
 		}).play(target:outputGroup);
 	}
 
-	*tablaLive {
-		| x=(-25) |
-		~tablaOut = {
-			var audio = SoundIn.ar(0)+SoundIn.ar(1);
-			audio = audio * (x.dbamp);
-			[audio,audio];
-		};
-		~tablaOut.play([0,1]);
-	}
-
 	*playTablaSynth {
 		"playTablaSynth".postln;
 		if(tablaSynth.notNil,{tablaSynth.free});
@@ -255,7 +236,7 @@ Vlc {
 			var env,audio;
 			// this is still not perfect - would be better if
 			// ~tabla.kr.dbamp was at its value of -100 dB from beginning...
-			env = Lag.ar(K2A.ar(~tabla.kr.dbamp),lagTime:4);
+			env = Lag.ar(K2A.ar(~hall.kr.dbamp),lagTime:4);
 			env = env * EnvGen.ar(Env.new([0,0,1],[4,4]));
 			audio = Mix.new([SoundIn.ar(0),SoundIn.ar(1)])*env*0.5;
 			//audio = audio + FreeVerb.ar(audio,mix:1,
@@ -270,10 +251,11 @@ Vlc {
 		"playNoTablaSynth".postln;
 		if(noTablaSynth.notNil,{noTablaSynth.free});
 		noTablaSynth = SynthDef(\noTablaSynth,{
-			var audio = [Mix.new(In.ar(leftChannels)),Mix.new(In.ar(rightChannels))];
-			audio = audio * ~noTabla.kr.dbamp;
-			audio = Compander.ar(audio,audio,thresh:~noTablaThreshold.kr.dbamp,slopeAbove:1/~noTablaRatio.kr,clampTime:0.002,relaxTime:0.1);
-			Out.ar(32,audio);
+			// var audio = [Mix.new(In.ar(leftChannels)),Mix.new(In.ar(rightChannels))];
+			var audio = [In.ar(Vlc.mainBus.index),In.ar(Vlc.mainBus.index+1)];
+			audio = audio * ~hall.kr.dbamp;
+			audio = Compander.ar(audio,audio,thresh:~threshold.kr.dbamp,slopeAbove:1/~ratio.kr,clampTime:0.002,relaxTime:0.1);
+			Out.ar(0,audio);
 		}).play(target:outputGroup);
 	}
 
@@ -339,10 +321,10 @@ Vlc {
 					arg bufnum;
 					var tablaL = SoundIn.ar(0);
 					var tablaR = SoundIn.ar(1);
-					var noTablaL = Mix.new(In.ar(leftChannels));
-					var noTablaR = Mix.new(In.ar(rightChannels));
-					noTablaL = DelayN.ar(noTablaL,0.5,~latency.kr)*(-10.dbamp);
-					noTablaR = DelayN.ar(noTablaR,0.5,~latency.kr)*(-10.dbamp);
+					var noTablaL = Mix.new(In.ar(leftChannels))*(-10.dbamp);
+					var noTablaR = Mix.new(In.ar(rightChannels))*(-10.dbamp);
+					// noTablaL = DelayN.ar(noTablaL,0.5,~latency.kr);
+					// noTablaR = DelayN.ar(noTablaR,0.5,~latency.kr);
 					DiskOut.ar(bufnum,[tablaL,tablaR,noTablaL,noTablaR]);
 				}).play(outputGroup,[bufnum:recBuffer.bufnum],addAction: 'addToTail');
 			},{

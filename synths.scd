@@ -122,6 +122,24 @@ SynthDef(\tine,
 	}
 ).add;
 
+SynthDef(\fm29,
+	{
+		arg freq=440,amp=0.1,gate=1,out=0,lpf=20000;
+		var f,mod,car,env,aud;
+		f = Clip.kr(freq,12.midicps,108.midicps)/2;
+		mod = EnvGen.ar(Env.pairs([[0,14],[0.4,0.5]],-8));
+		mod = SinOsc.ar(f*4,mul:f*mod); // modulating oscillator
+		car = SinOsc.ar(f+mod); // carrier oscillator
+		env = Env.adsr(0.001,0.008,-10.dbamp,0.008,curve:-4); // envelope
+		aud = car*EnvGen.ar(env,gate:gate,doneAction:2)*3.dbamp;
+		aud = Compander.ar(aud,aud,-10.dbamp,clampTime:0.001,relaxTime:0.001,slopeAbove:1/10); // compression
+		aud = aud * (3).dbamp; // makeup gain
+		aud = LPF.ar(aud,freq:Clip.kr(lpf,20,20000)); // lowpass filter
+		aud = aud * Clip.kr(amp,0,12.dbamp); // overall gain
+		Out.ar(out,aud);
+	}
+).add;
+
 SynthDef(\revtine,
 	{
 		arg freq=440,amp=0.1,gate=0.5,out=0,lpf=14000,attack=0.001,mul=1;
@@ -139,7 +157,7 @@ SynthDef(\revtine,
 ).add;
 
 c = Buffer.alloc(Server.default,16384);
-c.cheby([1,0,0.5,0,0.5,0.2,0.5,0.1,0.1,0.1,0.1,0.1]);
+c.cheby([1,1,1,1,0.5,0.2,0.5,0.1,0.1,0.1,0.1,0.1]);
 SynthDef(\chebyBass,
 	{
 		arg freq=55,amp=0.1,out=0,preamp=1,gate=0.5,fnoise=0.003,lpf=8000;
