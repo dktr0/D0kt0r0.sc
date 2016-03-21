@@ -1,6 +1,5 @@
 Sinfonia {
 
-	classvar <>allow;
 	classvar <tempo;
 	classvar <broadcast;
 
@@ -16,13 +15,10 @@ Sinfonia {
 	classvar recSynth,recBuffer;
 
 	*initClass {
-		allow = false;
 		nchnls = 2;
 		latency1 = 0.32;
 		latency2 = 0.19;
 		Sinfonia.broadcast_("192.168.0.255");
-		Sinfonia.oscdefs;
-		Sinfonia.tdefs;
 	}
 
 	*boot { // for live coding soloist only
@@ -112,14 +108,6 @@ Sinfonia {
 		piano = MIDIOut.newByName("IAC Driver", "Bus 1");
 	}
 
-	*start { // for orchestra members only
-		allow = true;
-	}
-
-	*stop { // for orchestra members only
-		allow = false;
-	}
-
 	*broadcast_ {
 		|x|
 		broadcast = x;
@@ -131,63 +119,6 @@ Sinfonia {
 		| notes |
 		send.sendMsg("/sinfonia/chord",notes.asCompileString);
 		topEnvironment.put(\chord,notes);
-	}
-
-	*tempo_ {
-		|x|
-		tempo = x;
-		TempoClock.tempo = x;
-		send.sendMsg("/sinfonia/tempo",x);
-	}
-
-	*signalToRecord {
-		Tdef(\burst,{ 40.do {
-			send.sendMsg("/sinfonia/record");
-			0.025.wait;
-		}}).play;
-	}
-
-	*event {
-		if([0,0].choose == 0, {
-			send.sendMsg("/sinfonia/orchestra")
-		},{
-			Tdef(\solo).play(quant:0);
-		});
-	}
-
-	*oscdefs {
-		OSCdef(\record,
-			{ |msg,time,addr,port|
-				if(allow,{
-					Server.default.record;
-				});
-		},"/sinfonia/record").permanent_(true);
-		OSCdef(\chord,
-			{ |msg,time,addr,port|
-				if(allow,{
-					("/sinfonia/chord " ++ msg[1].asString).postln;
-					topEnvironment.put(\chord,msg[1].asString.compile.value);
-				});
-		},"/sinfonia/chord").permanent_(true);
-		OSCdef(\tempo,
-			{ |msg,time,addr,port|
-				if(allow,{
-					("/sinfonia/tempo " ++ msg[1].asString).postln;
-					TempoClock.tempo = msg[1];
-				});
-		},"/sinfonia/tempo").permanent_(true);
-		OSCdef(\orchestra,
-			{ |msg,time,addr,port|
-				if(allow,{
-					"/sinfonia/orchestra".postln;
-					Tdef(\orchestra).play(quant:0);
-				});
-		},"/sinfonia/orchestra").permanent_(true);
-	}
-
-	*tdefs {
-
-
 	}
 
 	*firstSynth {
@@ -282,7 +213,7 @@ Sinfonia {
 		~chord = [ 60, 62, 64, 65, 67 ];
 		Sinfonia.signalToRecord;
 		Tdef(\two,{
-			Sinfonia.tempo = 1;
+			TempoClock.tempo = 1;
 			Sinfonia.chord([60,62,64,65,67]); 16.wait;
 			14.do {
 				Sinfonia.chord([64,66,68,69,71]); 4.wait;
