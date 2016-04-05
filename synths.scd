@@ -302,6 +302,17 @@ SynthDef(\swell,
 		Out.ar(out,audio);
 }).add;
 
+SynthDef(\pianoSwell,
+	{
+		arg freq = 440, out = 0, amp = 0.1, lpf = 2500, sustain = 6.001, fnoise = 0.003;
+		var env;
+		var audio = LFTri.ar(freq*Rand(1-fnoise,1+fnoise), mul: amp);
+		audio = LPF.ar(audio, freq: lpf);
+		env = EnvGen.ar(Env.new([0,1,0.2,0],[0.020,0.020,sustain-0.040]),doneAction:2);
+		audio = audio*env;
+		Out.ar(out,audio);
+}).add;
+
 SynthDef(\sawswell,
 	{
 		arg freq = 440, out = 0, amp = 0.1, sustain = 6.001, fnoise = 0.003, lpf = 10000;
