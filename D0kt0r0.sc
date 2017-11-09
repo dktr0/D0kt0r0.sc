@@ -16,6 +16,7 @@ D0kt0r0 {
 		});
 		Server.local.options.numOutputBusChannels = numChannels;
 		Server.local.options.numInputBusChannels = numInputs;
+		Server.local.options.numBuffers = 16384;
 		Server.local.options.memSize = 1024*512;
 		Server.local.options.sampleRate = sampleRate;
 		Server.default = Server.local;
@@ -36,7 +37,14 @@ D0kt0r0 {
 	}
 
 	*synths {
-		thisProcess.interpreter.executeFile("~/d0kt0r0.sc/synths.scd".standardizePath);
+		thisProcess.interpreter.executeFile((Platform.userExtensionDir ++ "/d0kt0r0.sc/synths.scd").standardizePath);
+	}
+
+	*superDirt {
+		~dirt = SuperDirt(Server.local.options.numOutputBusChannels, Server.local);
+		~dirt.loadSoundFiles;
+		// Server.local.sync; // wait for samples to be read
+		~dirt.start(57120, [0, 0]);
 	}
 
 }
