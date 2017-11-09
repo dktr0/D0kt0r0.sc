@@ -43,7 +43,6 @@ D0kt0r0 {
 	*superDirt {
 		~dirt = SuperDirt(Server.local.options.numOutputBusChannels, Server.local);
 		~dirt.loadSoundFiles;
-		// Server.local.sync; // wait for samples to be read
 		~dirt.start(57120, [0, 0]);
 	}
 
