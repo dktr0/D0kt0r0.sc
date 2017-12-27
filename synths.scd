@@ -330,9 +330,10 @@ SynthDef(\saw,
 		audio = Lag.ar(K2A.ar(freq*Rand(1-fnoise,1+fnoise)),0.5);
 		audio = Saw.ar(audio,mul:amp);
 		audio = LPF.ar(audio,freq:lpf);
-		audio = audio * EnvGen.ar(Env.adsr(0,0.2,-10.dbamp,10),gate);
+		audio = audio * EnvGen.ar(Env.adsr(0,0.2,-10.dbamp,10),gate,doneAction:2);
 		Out.ar(out,audio);
 }).add;
+
 
 SynthDef(\sawU,
 	{

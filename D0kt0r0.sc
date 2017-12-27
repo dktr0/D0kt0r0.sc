@@ -3,6 +3,8 @@ D0kt0r0 {
 	*boot {
 		|numChannels=2,numInputs=2,sampleRate = 48000|
 		var devices = [
+			"iRig PRO DUO",
+			"Stage-B16",
 			"Quartet",
 			"MOTU UltraLite mk3 Hybrid",
 			"MOTU 828mk3 Hybrid",
