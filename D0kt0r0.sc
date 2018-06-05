@@ -2,11 +2,31 @@ D0kt0r0 {
 
 	*boot {
 		|numChannels=2,numInputs=2,sampleRate = 48000|
+		Server.local.options.numOutputBusChannels = numChannels;
+		Server.local.options.numInputBusChannels = numInputs;
+		Server.local.options.numBuffers = 16384;
+		Server.local.options.memSize = 1024*512;
+		Server.local.options.sampleRate = sampleRate;
+		Server.default = Server.local;
+		Platform.case(
+			\windows, {D0kt0r0.windowsDeviceSelection},
+			\osx,{D0kt0r0.osxDeviceSelection},
+			\linux,{D0kt0r0.osxDeviceSelection}
+		);
+		D0kt0r0.waitForBoot;
+	}
+
+	*windowsDeviceSelection {
+		Server.local.options.device = "MOTU Audio ASIO";
+	}
+
+	*osxDeviceSelection {
 		var devices = [
 			"iRig PRO DUO",
 			"Stage-B16",
 			"Quartet",
 			"MOTU UltraLite mk3 Hybrid",
+
 			"MOTU 828mk3 Hybrid",
 			"8M",
 			"PreSonus FireStudio"].asSet;
@@ -17,14 +37,6 @@ D0kt0r0 {
 			Server.local.options.inDevice = "Built-in Input";
 			Server.local.options.outDevice = "Built-in Output";
 		});
-		Server.local.options.numOutputBusChannels = numChannels;
-		Server.local.options.numInputBusChannels = numInputs;
-		Server.local.options.numBuffers = 16384;
-		Server.local.options.memSize = 1024*512;
-		Server.local.options.sampleRate = sampleRate;
-		Server.default = Server.local;
-		D0kt0r0.tricks;
-		D0kt0r0.waitForBoot;
 	}
 
 	*waitForBoot {
