@@ -247,12 +247,12 @@ SynthDef(\point,
 
 SynthDef(\dust,
 	{
-		arg freq=110,amp=0.1,dur=0.061,gain = 2,density=5000,out=0;
+		arg freq=110,amp=0.1,gate=0.5,gain = 2,density=5000,out=0;
 		var audio = Dust.ar(density,mul:amp);
-		var env = Env.linen(0.001,0.010,dur-0.011);
+		var env = Env.adsr(0.001,0.001,-3.dbamp,0.011);
 		audio = MoogFF.ar(audio,freq,gain);
 		audio = LPF.ar(audio,13500);
-		audio = audio*EnvGen.ar(env,doneAction:2);
+		audio = audio*EnvGen.ar(env,gate:gate,doneAction:2);
 		Out.ar(out,audio);
 }).add;
 
@@ -332,6 +332,20 @@ SynthDef(\saw,
 		audio = LPF.ar(audio,freq:lpf);
 		audio = audio * EnvGen.ar(Env.adsr(0,0.2,-10.dbamp,10),gate,doneAction:2);
 		Out.ar(out,audio);
+}).add;
+
+SynthDef(\saw2,
+	{
+		arg out=0,out2=1,pan=0,pan2=0,freq=440,sustain=1,amp=0.1,lpf = 5000, fnoise=0.003;
+		var audio,panPos;
+		audio = Lag.ar(K2A.ar(freq*Rand(1-fnoise,1+fnoise)),0.5);
+		audio = Saw.ar(audio,mul:amp);
+		audio = LPF.ar(audio,freq:lpf);
+		audio = audio * EnvGen.ar(Env.new([0,1,-10.dbamp,-10.dbamp,0],[0.001,0.02,sustain-0.021,0.5]),doneAction:2);
+		panPos = Line.kr(pan,pan2,sustain);
+		audio = Pan2.ar(audio,panPos);
+		Out.ar(out,audio[0]);
+		Out.ar(out2,audio[1]);
 }).add;
 
 
