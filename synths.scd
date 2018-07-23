@@ -1,6 +1,32 @@
 // d0kt0r0's SynthDefs
 
 (
+SynthDef(\sawResonz,{
+	| freq = 55, amp = 0.1, out = 0 |
+	var audio = Saw.ar(freq,mul:amp);
+	audio = audio * EnvGen.ar(Env.perc(0.002,0.04),doneAction:2);
+	audio = Resonz.ar(audio,freq:freq*[1,2,4,8,16,32,64,128],bwr:-10.dbamp,mul:10.dbamp);
+	audio = Mix.ar(audio);
+	Out.ar(out,audio);
+}).add;
+
+SynthDef(\pulseResonz,{
+	| freq = 55, amp = 0.1, out = 0 |
+	var audio = Pulse.ar(freq,mul:amp);
+	audio = audio * EnvGen.ar(Env.perc(0.002,0.04),doneAction:2);
+	audio = Resonz.ar(audio,freq:freq*[1,2,4,8,16,32,64,128],bwr:-10.dbamp,mul:10.dbamp);
+	audio = Mix.ar(audio);
+	Out.ar(out,audio);
+}).add;
+
+SynthDef(\resonzSnare,{
+	| amp = 0.1, out = 0 |
+	var audio = WhiteNoise.ar(mul:amp);
+	audio = audio * EnvGen.ar(Env.perc(0.001,0.05),doneAction:2);
+	audio = Resonz.ar(audio,freq:55*(1..20),bwr:-10.dbamp,mul:(20..1).dbamp*(-15.dbamp));
+	audio = Mix.ar(audio);
+	Out.ar(out,audio);
+}).add;
 
 SynthDef(\rest,{
 	arg sustain=0.1;
