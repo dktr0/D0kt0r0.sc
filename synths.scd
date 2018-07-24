@@ -1,6 +1,16 @@
 // d0kt0r0's SynthDefs
 
 (
+
+SynthDef(\pad,{
+	| freq,amp,out,gate=0.5 |
+	var audio = Saw.ar(freq*[1,1.998,4.0001],[0,-3,-6].dbamp*amp);
+	audio = LPF.ar(audio,2000);
+	audio = Mix.ar(audio);
+	audio = audio * EnvGen.ar(Env.asr(0.01,releaseTime:0.25),gate:gate,doneAction:2);
+	Out.ar(out,audio);
+}).add;
+
 SynthDef(\sawResonz,{
 	| freq = 55, amp = 0.1, out = 0 |
 	var audio = Saw.ar(freq,mul:amp);
