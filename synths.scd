@@ -2,12 +2,12 @@
 
 (
 
-SynthDef(\pad,{
-	| freq,amp,out,gate=0.5 |
-	var audio = Saw.ar(freq*[1,1.998,4.0001],[0,-3,-6].dbamp*amp);
-	audio = LPF.ar(audio,2000);
+SynthDef(\saw3,{
+	| freq,amp,out,gate=0.5,attack=0.25,release=0.25,detune=0.01 |
+	var audio = Saw.ar(8.collect({Rand(1-detune,1/(1-detune))})*freq,[0,-3,-6].dbamp*amp);
+	audio = LPF.ar(audio,1000);
 	audio = Mix.ar(audio);
-	audio = audio * EnvGen.ar(Env.asr(0.01,releaseTime:0.25),gate:gate,doneAction:2);
+	audio = audio * EnvGen.ar(Env.asr(attack,releaseTime:release),gate:gate,doneAction:2);
 	Out.ar(out,audio);
 }).add;
 
